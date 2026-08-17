@@ -1,4 +1,5 @@
 /* See LICENSE file for copyright and license details. */
+#include <X11/XF86keysym.h>
 
 /* appearance */
 static const unsigned int borderpx  = 1;        /* border pixel of windows */
@@ -121,6 +122,11 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_period, tagmon,         {.i = +1 } },
 	{ MODKEY,                       XK_minus,  setgaps,        {.i = -1 } },
 	{ MODKEY,                       XK_plus,   setgaps,        {.i = +1 } },
+	{ 0,           XF86XK_AudioRaiseVolume,   spawn, SHCMD("amixer -q sset Master 5%+ unmute") },
+	{ 0,           XF86XK_AudioLowerVolume,   spawn, SHCMD("amixer -q sset Master 5%- unmute") },
+	{ 0,           XF86XK_AudioMute,          spawn, SHCMD("amixer -q sset Master toggle") },
+	{ 0,           XF86XK_MonBrightnessUp,    spawn, SHCMD("brightnessctl set 5%+") },
+	{ 0,           XF86XK_MonBrightnessDown,  spawn, SHCMD("brightnessctl set 5%-") },
 	TAGKEYS(                        XK_1,                      0)
 	TAGKEYS(                        XK_2,                      1)
 	TAGKEYS(                        XK_3,                      2)
