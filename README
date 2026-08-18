@@ -1,48 +1,98 @@
-dwm - dynamic window manager
-============================
-dwm is an extremely fast, small, and dynamic window manager for X.
+dwm 6.8, patched. -v prints version.
 
+Patches
+-------
+On top of vanilla dwm 6.8. Diffs in patches-6.8/.
 
-Requirements
-------------
-In order to build dwm you need the Xlib header files.
+ fixborders        opaque borders under a compositor
+ alwayscenter      floating windows open centered
+ restartsig        restart action; SIGHUP/SIGTERM handling, see Signals
+ moveresize        move/resize floating windows from the keyboard
+ focusonclick      focus on click, not hover
+ hide_vacant_tags  empty tags hidden from the bar
+ monocle_count     monocle shows [position/total] in the bar
+ movestack         swap focused client with next/previous in the stack
+ fullgaps          uniform, adjustable gaps between tiled windows
+ fibonacci         spiral and dwindle layouts; gap-aware
+ pertag            layout/mfact/nmaster/bar remembered per tag
+ scratchpad        floating scratchpad terminal, toggled in and out
+ swallow           a terminal's window is swallowed by a GUI program it
+                   spawns, restored on exit
+ swaptags          swap current tag's clients with another tag's
+ volbright-keys    XF86 keys -> amixer / brightnessctl (not a suckless.org
+                   patch)
+ attachaside       new clients attach beside same-tag clients instead of
+                   becoming master
 
+Keybinds
+--------
+Match stock dwm defaults. A couple of keys are bound twice, once per
+keysym, because which physical key is unshifted depends on the active
+keyboard layout - marked US/ES below.
 
-Installation
-------------
-Edit config.mk to match your local setup (dwm is installed into
-the /usr/local namespace by default).
+ Mod1-p                          spawn dmenu
+ Mod1-Shift-Return               spawn terminal
+ Mod1-grave / Mod1-masculine (US/ES)   toggle scratchpad terminal
+ Mod1-b                          toggle bar
+ Mod1-j / Mod1-k                 focus next / previous window
+ Mod1-i / Mod1-d                 increase / decrease master area windows
+ Mod1-l / Mod1-h                 increase / decrease master area size
+ Mod1-Shift-j / Mod1-Shift-k     swap focused client with next / previous
+                                  in stack
+ Mod1-Return                     zoom focused window to/from master
+ Mod1-Tab                        toggle previously selected tags
+ Mod1-Shift-c                    close focused window
+ Mod1-t / f / m / r / Shift-r    set layout: tiled / floating / monocle /
+                                  spiral / dwindle
+ Mod1-space                      toggle current/previous layout
+ Mod1-Shift-space                toggle focused window floating/tiled
+ Mod1-Arrows                     move focused floating window
+ Mod1-Shift-Arrows               resize focused floating window
+ Mod1-Control-Arrows             snap focused floating window to edge
+ Mod1-Control-Shift-Arrows       stretch focused floating window to edge
+ Mod1-0 / Mod1-Shift-0           view / apply all tags
+ Mod1-, / Mod1-.                 focus previous / next monitor
+ Mod1-Shift-, / Mod1-Shift-.     send focused window to prev / next monitor
+ Mod1-minus                      decrease gaps
+ Mod1-plus / Mod1-equal (US/ES)  increase gaps
+ Mod1-[1-9]                      view nth tag
+ Mod1-Control-[1-9]              toggle nth tag in view
+ Mod1-Shift-[1-9]                apply nth tag to focused window
+ Mod1-Control-Shift-[1-9]        toggle nth tag on focused window
+ Mod4-Shift-[1-9]                swap current tag's clients with nth tag's
+ Mod1-Shift-q                    quit
+ Mod1-Control-Shift-q            restart
+ XF86AudioRaiseVolume/Lower/Mute volume up/down/mute, via amixer
+ XF86MonBrightnessUp/Down        brightness up/down, via brightnessctl
 
-Afterwards enter the following command to build and install dwm (if
-necessary as root):
+Mouse
+-----
+ tag number: click / right-click            view tag / toggle into view
+ tag number: Mod1-click / Mod1-right-click  send window to tag / toggle
+                                              tag on window
+ layout symbol: click / right-click         toggle layout / jump to
+                                              monocle
+ window title: middle-click                 zoom focused window to master
+ status text: middle-click                  spawn terminal
+ on a window: Mod1-drag                     move (floats it first)
+ on a window: Mod1-middle-click             toggle floating
+ on a window: Mod1-Button3-drag             resize (floating)
 
+Status text: read from the root window name; set with xsetroot(1).
+
+Signals: SIGHUP restarts, SIGTERM quits cleanly.
+
+Repo layout: patches/ = originals as sourced, reference only.
+patches-6.8/ = one diff per patch above, in order; apply 01->16 in
+sequence, not standalone. Upgrade: rebase this branch onto a new dwm
+tag, fix conflicts one at a time.
+
+Build
+-----
     make clean install
 
+Needs Xlib headers; swallow also needs libxcb + xcb-res. Add
+`exec dwm` to .xinitrc. Edit config.h directly, then `make`.
 
-Running dwm
------------
-Add the following line to your .xinitrc to start dwm using startx:
-
-    exec dwm
-
-In order to connect dwm to a specific display, make sure that
-the DISPLAY environment variable is set correctly, e.g.:
-
-    DISPLAY=foo.bar:1 exec dwm
-
-(This will start dwm on display :1 of the host foo.bar.)
-
-In order to display status info in the bar, you can do something
-like this in your .xinitrc:
-
-    while xsetroot -name "`date` `uptime | sed 's/.*,//'`"
-    do
-    	sleep 1
-    done &
-    exec dwm
-
-
-Configuration
--------------
-The configuration of dwm is done by creating a custom config.h
-and (re)compiling the source code.
+See also: dmenu(1), st(1), amixer(1), brightnessctl(1)
+Bugs: https://github.com/loothmarleck/dwm

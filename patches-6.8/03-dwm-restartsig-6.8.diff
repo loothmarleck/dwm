@@ -1,0 +1,114 @@
+diff --git a/config.def.h b/config.def.h
+index 81c3fc0..fb3c4b8 100644
+--- a/config.def.h
++++ b/config.def.h
+@@ -96,6 +96,7 @@ static const Key keys[] = {
+ 	TAGKEYS(                        XK_8,                      7)
+ 	TAGKEYS(                        XK_9,                      8)
+ 	{ MODKEY|ShiftMask,             XK_q,      quit,           {0} },
++	{ MODKEY|ControlMask|ShiftMask, XK_q,      quit,           {1} },
+ };
+ 
+ /* button definitions */
+diff --git a/dwm.1 b/dwm.1
+index ddc8321..7b6cadb 100644
+--- a/dwm.1
++++ b/dwm.1
+@@ -142,6 +142,9 @@ Add/remove all windows with nth tag to/from the view.
+ .TP
+ .B Mod1\-Shift\-q
+ Quit dwm.
++.TP
++.B Mod1\-Control\-Shift\-q
++Restart dwm.
+ .SS Mouse commands
+ .TP
+ .B Mod1\-Button1
+@@ -155,6 +158,13 @@ Resize focused window while dragging. Tiled windows will be toggled to the float
+ .SH CUSTOMIZATION
+ dwm is customized by creating a custom config.h and (re)compiling the source
+ code. This keeps it fast, secure and simple.
++.SH SIGNALS
++.TP
++.B SIGHUP - 1
++Restart the dwm process.
++.TP
++.B SIGTERM - 15
++Cleanly terminate the dwm process.
+ .SH SEE ALSO
+ .BR dmenu (1),
+ .BR st (1)
+diff --git a/dwm.c b/dwm.c
+index 0f7c9d3..403e169 100644
+--- a/dwm.c
++++ b/dwm.c
+@@ -204,6 +204,8 @@ static void setmfact(const Arg *arg);
+ static void setup(void);
+ static void seturgent(Client *c, int urg);
+ static void showhide(Client *c);
++static void sighup(int unused);
++static void sigterm(int unused);
+ static void spawn(const Arg *arg);
+ static void tag(const Arg *arg);
+ static void tagmon(const Arg *arg);
+@@ -259,6 +261,7 @@ static void (*handler[LASTEvent]) (XEvent *) = {
+ 	[UnmapNotify] = unmapnotify
+ };
+ static Atom wmatom[WMLast], netatom[NetLast];
++static int restart = 0;
+ static int running = 1;
+ static Cur *cursor[CurLast];
+ static Clr **scheme;
+@@ -1260,6 +1263,8 @@ propertynotify(XEvent *e)
+ void
+ quit(const Arg *arg)
+ {
++	if (arg->i)
++		restart = 1;
+ 	running = 0;
+ }
+ 
+@@ -1555,6 +1560,13 @@ setup(void)
+ 	/* clean up any zombies (inherited from .xinitrc etc) immediately */
+ 	while (waitpid(-1, NULL, WNOHANG) > 0);
+ 
++	/* restart on SIGHUP, cleanly exit on SIGTERM */
++	sa.sa_flags = SA_RESTART;
++	sa.sa_handler = sighup;
++	sigaction(SIGHUP, &sa, NULL);
++	sa.sa_handler = sigterm;
++	sigaction(SIGTERM, &sa, NULL);
++
+ 	/* init screen */
+ 	screen = DefaultScreen(dpy);
+ 	sw = DisplayWidth(dpy, screen);
+@@ -1646,6 +1658,20 @@ showhide(Client *c)
+ 	}
+ }
+ 
++void
++sighup(int unused)
++{
++	Arg a = {.i = 1};
++	quit(&a);
++}
++
++void
++sigterm(int unused)
++{
++	Arg a = {.i = 0};
++	quit(&a);
++}
++
+ void
+ spawn(const Arg *arg)
+ {
+@@ -2161,6 +2187,8 @@ main(int argc, char *argv[])
+ #endif /* __OpenBSD__ */
+ 	scan();
+ 	run();
++	if (restart)
++		execvp(argv[0], argv);
+ 	cleanup();
+ 	XCloseDisplay(dpy);
+ 	return EXIT_SUCCESS;

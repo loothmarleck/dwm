@@ -1,0 +1,45 @@
+diff --git a/dwm.c b/dwm.c
+index fde56f7..ab2a2ae 100644
+--- a/dwm.c
++++ b/dwm.c
+@@ -711,6 +711,8 @@ drawbar(Monitor *m)
+ 	int boxs = drw->fonts->h / 9;
+ 	int boxw = drw->fonts->h / 6 + 2;
+ 	unsigned int i, occ = 0, urg = 0;
++	unsigned int a = 0, s = 0;
++	char posbuf[10];
+ 	Client *c;
+ 
+ 	if (!m->showbar)
+@@ -741,6 +743,16 @@ drawbar(Monitor *m)
+ 	w = TEXTW(m->ltsymbol);
+ 	drw_setscheme(drw, scheme[SchemeNorm]);
+ 	x = drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0);
++	if (m->lt[m->sellt]->arrange == monocle) {
++		for (c = nexttiled(m->clients), a = 0, s = 0; c; c = nexttiled(c->next), a++)
++			if (c == m->stack)
++				s = a;
++		if (!s && a)
++			s = a;
++		snprintf(posbuf, LENGTH(posbuf), "[%d/%d]", s, a);
++		w = TEXTW(posbuf);
++		x = drw_text(drw, x, 0, w, bh, lrpad / 2, posbuf, 0);
++	}
+ 
+ 	if ((w = m->ww - tw - x) > bh) {
+ 		if (m->sel) {
+@@ -1105,14 +1117,8 @@ maprequest(XEvent *e)
+ void
+ monocle(Monitor *m)
+ {
+-	unsigned int n = 0;
+ 	Client *c;
+ 
+-	for (c = m->clients; c; c = c->next)
+-		if (ISVISIBLE(c))
+-			n++;
+-	if (n > 0) /* override layout symbol */
+-		snprintf(m->ltsymbol, sizeof m->ltsymbol, "[%d]", n);
+ 	for (c = nexttiled(m->clients); c; c = nexttiled(c->next))
+ 		resize(c, m->wx, m->wy, m->ww - 2 * c->bw, m->wh - 2 * c->bw, 0);
+ }

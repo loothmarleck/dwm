@@ -1,0 +1,129 @@
+diff --git a/config.def.h b/config.def.h
+index 3003021..1d7f0bf 100644
+--- a/config.def.h
++++ b/config.def.h
+@@ -40,11 +40,14 @@ static const int resizehints = 1;    /* 1 means respect size hints in tiled resi
+ static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen window */
+ static const int refreshrate = 120;  /* refresh rate (per second) for client move/resize */
+ 
++#include "fibonacci.c"
+ static const Layout layouts[] = {
+ 	/* symbol     arrange function */
+ 	{ "[]=",      tile },    /* first entry is default */
+ 	{ "><>",      NULL },    /* no layout function means floating behavior */
+ 	{ "[M]",      monocle },
++	{ "[@]",      spiral },
++	{ "[\\]",     dwindle },
+ };
+ 
+ /* key definitions */
+@@ -83,6 +86,8 @@ static const Key keys[] = {
+ 	{ MODKEY,                       XK_t,      setlayout,      {.v = &layouts[0]} },
+ 	{ MODKEY,                       XK_f,      setlayout,      {.v = &layouts[1]} },
+ 	{ MODKEY,                       XK_m,      setlayout,      {.v = &layouts[2]} },
++	{ MODKEY,                       XK_r,      setlayout,      {.v = &layouts[3]} },
++	{ MODKEY|ShiftMask,             XK_r,      setlayout,      {.v = &layouts[4]} },
+ 	{ MODKEY,                       XK_space,  setlayout,      {0} },
+ 	{ MODKEY|ShiftMask,             XK_space,  togglefloating, {0} },
+ 	{ MODKEY,                       XK_Down,   moveresize,     {.v = "0x 25y 0w 0h" } },
+diff --git a/fibonacci.c b/fibonacci.c
+new file mode 100644
+index 0000000..6741cdd
+--- /dev/null
++++ b/fibonacci.c
+@@ -0,0 +1,95 @@
++void
++fibonacci(Monitor *mon, int s) {
++	unsigned int i, n;
++	int nx, ny, nw, nh;
++	int nv, hrest = 0, wrest = 0, r = 1;
++	unsigned int g = mon->gappx;
++	Client *c;
++
++	for(n = 0, c = nexttiled(mon->clients); c; c = nexttiled(c->next), n++);
++	if(n == 0)
++		return;
++
++	nx = mon->wx + g;
++	ny = mon->wy + g;
++	nw = mon->ww - 2*g;
++	nh = mon->wh - 2*g;
++
++	for(i = 0, c = nexttiled(mon->clients); c; c = nexttiled(c->next)) {
++		if (r) {
++			if ((i % 2 && (nh - g) / 2 <= 2*c->bw)
++			   || (!(i % 2) && (nw - g) / 2 <= 2*c->bw)) {
++				r = 0;
++			}
++			if (r && i < n - 1) {
++				if (i % 2) {
++					nv = (nh - g) / 2;
++					hrest = nh - 2*nv - g;
++					nh = nv;
++				} else {
++					nv = (nw - g) / 2;
++					wrest = nw - 2*nv - g;
++					nw = nv;
++				}
++
++				if ((i % 4) == 2 && !s)
++					nx += nw + g;
++				else if ((i % 4) == 3 && !s)
++					ny += nh + g;
++			}
++
++			if ((i % 4) == 0) {
++				if (s) {
++					ny += nh + g;
++					nh += hrest;
++				}
++				else {
++					nh -= hrest;
++					ny -= nh + g;
++				}
++			}
++			else if ((i % 4) == 1) {
++				nx += nw + g;
++				nw += wrest;
++			}
++			else if ((i % 4) == 2) {
++				ny += nh + g;
++				nh += hrest;
++				if (i < n - 1)
++					nw += wrest;
++			}
++			else if ((i % 4) == 3) {
++				if (s) {
++					nx += nw + g;
++					nw -= wrest;
++				} else {
++					nw -= wrest;
++					nx -= nw + g;
++					nh += hrest;
++				}
++			}
++			if (i == 0)	{
++				if (n != 1) {
++					nw = (mon->ww - g - 2*g) - (mon->ww - g - 2*g) * (1 - mon->mfact);
++					wrest = 0;
++				}
++				ny = mon->wy + g;
++			}
++			else if (i == 1)
++				nw = mon->ww - nw - g - 2*g;
++			i++;
++		}
++
++		resize(c, nx, ny, nw - (2*c->bw), nh - (2*c->bw), False);
++	}
++}
++
++void
++dwindle(Monitor *mon) {
++	fibonacci(mon, 1);
++}
++
++void
++spiral(Monitor *mon) {
++	fibonacci(mon, 0);
++}
