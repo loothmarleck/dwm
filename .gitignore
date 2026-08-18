@@ -1,2 +1,4 @@
 *.o
 dwm
+dwm-*.tar.gz
+notes/
